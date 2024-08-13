@@ -5,12 +5,34 @@ on:
     branches:
       - main
 jobs:
-  pipeline:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Echo message
         run: |
-          echo "hello pipeline"
+          echo "hello test"
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: run test
+        run: |
+          pytest
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo message
+        run: |
+          echo "hello lint"
 
       - uses: actions/checkout@v4
 
@@ -27,10 +49,24 @@ jobs:
       - name: run lint
         run: |
           pylint app.py
-      - name: run test
-        run: |  
-          echo "Working directory:"
-          pwd
-          echo "Files in working directory:"
-          ls
-          pytest
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+      - name: Echo message
+        run: |
+          echo "hello build"
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "Cambiar aqui el folder del requirements para enviarlo a AWS"

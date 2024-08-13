@@ -23,6 +23,7 @@ venv
 docs.zip
 hello.py
 archive.zip
+pendint.txt
 Lib
 *.zip
 # vim temporary files
