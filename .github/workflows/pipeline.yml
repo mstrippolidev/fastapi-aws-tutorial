@@ -13,8 +13,6 @@ jobs:
           echo "hello pipeline"
 
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
@@ -30,5 +28,9 @@ jobs:
         run: |
           pylint app.py
       - name: run test
-        run: |
+        run: |  
+          echo "Working directory:"
+          pwd
+          echo "Files in working directory:"
+          ls
           pytest

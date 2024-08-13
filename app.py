@@ -175,7 +175,7 @@ async def edit_post_image_file(post_id: int, title: str = Form(...), # pylint: d
                                content: str = Form(...),
                     db: Session = Depends(get_db),
                     user_response : UserResponse = Depends(get_current_user),
-                    image_file: UploadFile = File(...)): # pylint: disable=too-many-arguments
+                    image_file: UploadFile = File(...)):
     """
         Edit single post with image in formData
     """
