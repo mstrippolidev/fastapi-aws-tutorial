@@ -68,5 +68,18 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -t .
           echo "Cambiar aqui el folder del requirements para enviarlo a AWS"
+
+      - name: Package application
+        run: |
+          zip -r package.zip .
+
+      - name: Deploy to AWS Lambda
+        uses: appleboy/lambda-action@v0.2.0
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: 'us-east-1'
+          function_name: 'fastapiApp'
+          zip_file: 'package.zip'
