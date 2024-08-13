@@ -32,7 +32,7 @@ async def hello():
     """
         Initial function for testing
     """
-    return {"msg": "Hello wordl"}
+    return {"msg": "Hello wordl from actions"}
 
 @app.post('/api/register')
 async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:

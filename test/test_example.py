@@ -9,4 +9,4 @@ def test_default():
 def test_endpoint():
     response = client.get('/')
     assert response.status_code == 200
-    assert response.json() == {"msg": "Hello wordl"}
+    assert response.json() == {"msg": "Hello wordl from actions"}
