@@ -75,6 +75,9 @@ jobs:
         run: |
           zip -r package.zip .
 
+      - name: Echos
+        run: |
+          echo "${{ secrets.AWS_ACCESS_KEY_ID }}"
       - name: Deploy to AWS Lambda
         uses: appleboy/lambda-action@v0.2.0
         with:
