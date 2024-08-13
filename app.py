@@ -171,11 +171,11 @@ async def edit_post(post_request: PostCreateImage,post_id: int,
     return post
 
 @app.put("/api/posts/{post_id}/image-file", response_model=PostResponse)
-async def edit_post_image_file(post_id: int, title: str = Form(...),
+async def edit_post_image_file(post_id: int, title: str = Form(...), # pylint: disable=too-many-arguments
                                content: str = Form(...),
                     db: Session = Depends(get_db),
                     user_response : UserResponse = Depends(get_current_user),
-                    image_file: UploadFile = File(...)):
+                    image_file: UploadFile = File(...)): # pylint: disable=too-many-arguments
     """
         Edit single post with image in formData
     """
