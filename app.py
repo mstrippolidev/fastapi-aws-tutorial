@@ -11,19 +11,18 @@ from fastapi import (FastAPI, Depends, HTTPException, UploadFile)
 from fastapi.param_functions import File, Form
 from pydantic_models.schemas import (UserCreate, UserResponse, PostResponseUser,
                                      PostResponse, PostCreateImage, PostResponsePaginated)
-from database.services import (get_db, get_user_email,
+load_dotenv()  # load environment variables
+from database.services import (get_db, get_user_email, # pylint: disable=wrong-import-position
                                generate_jwt_token, is_valid_user,
                                get_user_by_token, get_image_path, save_post,
                                get_post, update_post)
-from database.models import (User, Posts)
-
-
-load_dotenv()  # load environment variables
+from database.models import (User, Posts)  # pylint: disable=wrong-import-position
+from database.database import (baseModel, engine)  # pylint: disable=wrong-import-position
 
 app = FastAPI()
 
 # Create all tables
-# baseModel.metadata.create_all(bind=engine)
+baseModel.metadata.create_all(bind=engine)
 
 PAGE_SIZE = 3
 print('antes del routed')
@@ -149,7 +148,7 @@ async def get_post_detail(post_id: int, db: Session = Depends(get_db)):
     """
         Get post details.
     """
-    post = await get_post(db, None, id = post_id)
+    post = await get_post(db, None, post_id = post_id)
     if not post:
         raise HTTPException(404, "post not found")
     return post
@@ -229,3 +228,4 @@ async def get_posts_all(page: int = 1, search: str = None,
         print("Error", str(e))
         raise HTTPException(422, f"Error: {str(e)}") from e
 handler = Mangum(app)
+print('cargo')
