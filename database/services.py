@@ -6,7 +6,7 @@ import base64
 import random
 import string
 import re
-from datetime import (datetime, timedelta)
+from datetime import (datetime, timedelta, timezone)
 import boto3
 import jwt
 from fastapi import  (Depends, HTTPException, UploadFile)
@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import (Session, joinedload)
 from database.database import (baseModel, # pylint: disable=import-error, no-name-in-module
                                engine, SessionLocal)
-from database.models import (User, Posts) # pylint: disable=import-error, no-name-in-module
+from database.models import (User, Posts, RefreshToken) # pylint: disable=import-error, no-name-in-module
 
 from pydantic_models.schemas import (UserResponse, PostResponse)
 
@@ -29,6 +29,7 @@ aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY_FASTAPI")
 s3 = boto3.client('s3', aws_access_key_id = aws_access_key_id,
                   aws_secret_access_key=aws_secret_access_key)
 BUCKET_NAME = os.getenv("BUCKET_NAME")
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 def create_db():
     """
@@ -47,6 +48,15 @@ def get_db():
     finally:
         db.close()
 
+async def get_user(user_id: int, db: Session) -> User:
+    """
+        Get the user id from the db
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(404,detail="User not found")
+    return user
+
 async def get_user_email(email:str, db: Session) -> User:
     """
         Method to get a user by email
@@ -54,20 +64,87 @@ async def get_user_email(email:str, db: Session) -> User:
     db_user = db.query(User).filter(User.email.ilike(email)).first()
     return db_user
 
-async def generate_jwt_token(user: User) -> dict:
+async def verify_token(token: str, credentials_exception):
+    try:
+        payload = jwt.decode(token, SECRET_JWT, algorithms=["HS256"])    
+    except:
+        raise credentials_exception
+    # Token is not expired  
+    exp = payload.get('exp')
+    if exp is None or datetime.utcfromtimestamp(exp) < datetime.utcnow():
+        raise credentials_exception
+    return payload
+
+
+async def encode_token(user: User, minutes: int = 60):
     """
-        Method to generate a jwt token
+        Function to encode a token
     """
-    # Convert user model to user schema with the from_orm method of pedantyc
+     # Convert user model to user schema with the from_orm method of pedantyc
     schema_user = UserResponse.from_orm(user)
     # Convert to dict
     user_dict = schema_user.dict(exclude='created_at')
     jwt_dict = {**user_dict,
-                "exp": datetime.utcnow() + timedelta(minutes=60)}
+                "exp": datetime.now(timezone.utc) + timedelta(minutes=minutes)}
     # Create the JWT
     token = jwt.encode(jwt_dict, SECRET_JWT, algorithm="HS256")
 
-    return {"access_token": token, "token_type": "Bearer"}
+    return token
+
+
+async def save_refresh_token(user_id: int, refresh_token: str, db : Session):
+    """
+        Save the refresh token to the database
+    """
+    refresh_token_db = RefreshToken(user_id = user_id, refresh_token = refresh_token)
+    db.add(refresh_token_db)
+    db.commit()
+
+
+async def get_refresh_token(user_id: int, db: Session):
+    """
+        Function to get the refresh_token from a user
+    """
+    refresh_token = db.query(RefreshToken).filter(RefreshToken.user_id == user_id).first()
+    return refresh_token
+
+
+
+async def get_or_create_refresh_token(user: User, db: Session = None):
+    """
+        Function to get or create refresh token
+    """
+    refresh_token_db = None
+    # Only one user per token, get the current user token if exists
+    if db is not None:
+        refresh_token_db = await get_refresh_token(user.id, db)
+        
+    if refresh_token_db is None:
+        refresh_token = await encode_token(user, REFRESH_TOKEN_EXPIRE_DAYS * 60 * 24)
+    else:
+        refresh_token = refresh_token_db.refresh_token
+
+    if db is not None and refresh_token_db is None:
+        await save_refresh_token(user.id, refresh_token, db)
+    return refresh_token
+
+async def generate_jwt_token(user: User, db: Session = None) -> dict:
+    """
+        Method to generate a jwt token
+    """
+    token = await encode_token(user)
+    refresh_token = await get_or_create_refresh_token(user, db)
+    return {"access_token": token, "token_type": "Bearer",
+            "refresh_token": refresh_token}
+
+async def delete_refresh_token(user_id: int, db: Session):
+    """
+        Delete the refresh token from the user
+    """
+    db_token = db.query(RefreshToken).filter(RefreshToken.user_id == user_id).first()
+    if db_token:
+        db.delete(db_token)
+        db.commit()
 
 async def is_valid_user(email:str, password:str, db: Session):
     """
@@ -88,11 +165,24 @@ async def get_user_by_token(db: Session = Depends(get_db),
     try:
         # Decode the token and get the user_id from it
         payload = jwt.decode(token, SECRET_JWT, algorithms=["HS256"])
-        user_db = db.query(User).get(payload['id'])
-        user_schema = UserResponse.from_orm(user_db)
-        return user_schema
+    
     except Exception as e:
         raise HTTPException(422, f"Error {str(e)}") from e
+
+    user_db = db.query(User).get(payload['id'])
+    if not user_db:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Check if the token has expired
+    exp = payload.get("exp")
+    if exp is None or datetime.utcfromtimestamp(exp) < datetime.utcnow():
+        raise HTTPException(status_code=401, detail="Token has expired")
+    
+    user_schema = UserResponse.from_orm(user_db)
+    return user_schema
+    
+
+
 async def get_extension_from_base64(base64_str: str):
     """
         Function to get the extension from a base64 string

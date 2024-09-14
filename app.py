@@ -15,7 +15,8 @@ load_dotenv()  # load environment variables
 from database.services import (get_db, get_user_email, # pylint: disable=wrong-import-position
                                generate_jwt_token, is_valid_user,
                                get_user_by_token, get_image_path, save_post,
-                               get_post, update_post)
+                               get_post, update_post, oauth2_scheme, verify_token,
+                               get_refresh_token, get_user, delete_refresh_token)
 from database.models import (User, Posts)  # pylint: disable=wrong-import-position
 from database.database import (baseModel, engine)  # pylint: disable=wrong-import-position
 
@@ -33,7 +34,7 @@ async def hello():
     """
     return {"msg": "Hello wordl from actions"}
 
-@app.post('/api/register')
+@app.post('/api/register', status_code = 201)
 async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:
     """
         Api to register users.
@@ -54,7 +55,7 @@ async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:
         db.refresh(user_model)
 
         # Generate token and response
-        token = await generate_jwt_token(user_model)
+        token = await generate_jwt_token(user_model, db=db)
 
         # response
         # user_dict = UserResponse.from_orm(user_model).dict()
@@ -64,8 +65,8 @@ async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:
         print('error', str(e))
         raise HTTPException(status_code=422, detail=f"Unexpected error {str(e)}") from e
     db.commit()
-    print("ok", response)
     return response
+
 @app.post('/api/login')
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
                      db: Session = Depends(get_db)):
@@ -79,9 +80,46 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
 
     if not is_valid:
         raise HTTPException(401, user_db)
-    token = await generate_jwt_token(user_db)
+    token = await generate_jwt_token(user_db, db)
 
     return token
+
+@app.post('/api/refresh_token')
+async def refresh_token(token:str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """
+        Validate that refresh token is correct and send a generate a new one
+    """
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    payload = await verify_token(token, credentials_exception)
+    user_id = payload.get('id')
+    if user_id is None:
+        raise credentials_exception
+    refresh_token_db = await get_refresh_token(user_id, db)
+    # Validate that has the same token.
+    if refresh_token_db is None or refresh_token_db.refresh_token != token:
+        raise credentials_exception
+    
+    # Refresh the token on the database
+    user_db = await get_user(user_id, db)
+    new_token = await generate_jwt_token(user_db)
+    refresh_token_db.refresh_token = new_token["refresh_token"]
+    db.commit()
+    db.refresh(refresh_token_db)
+    return new_token
+    
+
+@app.get('/api/logout')
+async def logout(user_response: UserResponse = Depends(get_user_by_token),db: Session = Depends(get_db)):
+    """
+        Delete the refresh_token from the user
+    """
+    delete_refresh_token(user_response.id, db)
+    return {"message": "Logout sucessfull"}
 
 @app.get('/api/current_user', response_model=UserResponse)
 async def get_current_user(user_response : UserResponse = Depends(get_user_by_token)):
@@ -91,7 +129,7 @@ async def get_current_user(user_response : UserResponse = Depends(get_user_by_to
     return user_response
 
 
-@app.post('/api/posts', response_model=PostResponse)
+@app.post('/api/posts', response_model=PostResponse, status_code = 201)
 async def create_post(post_request: PostCreateImage,
                     user_response: UserResponse = Depends(get_current_user),
                     db: Session = Depends(get_db)):

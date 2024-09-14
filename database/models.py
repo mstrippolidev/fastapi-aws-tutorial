@@ -2,7 +2,7 @@
     This file contains the models that represent each table in the database for 
     user and post.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from passlib.hash import bcrypt
 from sqlalchemy.orm import relationship
 from sqlalchemy import (Column, Integer, String, ForeignKey)
@@ -43,3 +43,12 @@ class Posts(baseModel): # pylint: disable=too-few-public-methods
     created_at = Column(String, default=datetime.utcnow())
     # relationship
     user = relationship("User", back_populates='posts')
+
+
+
+class RefreshToken(baseModel):
+    __tablename__ = 'refresh_token'
+    id = Column(Integer, primary_key=True, index=True)
+    refresh_token = Column(String, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    created_at = Column(String, default=datetime.now(timezone.utc))
