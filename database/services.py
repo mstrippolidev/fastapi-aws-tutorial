@@ -9,8 +9,8 @@ import re
 from datetime import (datetime, timedelta, timezone)
 import boto3
 import jwt
-from fastapi import  (Depends, HTTPException, UploadFile)
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import  (Depends, HTTPException, UploadFile, Security)
+from fastapi.security import (OAuth2PasswordBearer)
 from sqlalchemy.orm import (Session, joinedload)
 from database.database import (baseModel, # pylint: disable=import-error, no-name-in-module
                                engine, SessionLocal)
@@ -96,6 +96,7 @@ async def save_refresh_token(user_id: int, refresh_token: str, db : Session):
     """
         Save the refresh token to the database
     """
+    print('saving the refresh token')
     refresh_token_db = RefreshToken(user_id = user_id, refresh_token = refresh_token)
     db.add(refresh_token_db)
     db.commit()
@@ -108,30 +109,27 @@ async def get_refresh_token(user_id: int, db: Session):
     refresh_token = db.query(RefreshToken).filter(RefreshToken.user_id == user_id).first()
     return refresh_token
 
-
-
-async def get_or_create_refresh_token(user: User, db: Session = None):
+async def get_or_create_refresh_token(user: User, db: Session):
     """
         Function to get or create refresh token
     """
     refresh_token_db = None
     # Only one user per token, get the current user token if exists
-    if db is not None:
-        refresh_token_db = await get_refresh_token(user.id, db)
-        
+    # Feach the refresh token for this user
+    refresh_token_db = await get_refresh_token(user.id, db)
     if refresh_token_db is None:
         refresh_token = await encode_token(user, REFRESH_TOKEN_EXPIRE_DAYS * 60 * 24)
+        await save_refresh_token(user.id, refresh_token, db)
     else:
         refresh_token = refresh_token_db.refresh_token
-
-    if db is not None and refresh_token_db is None:
-        await save_refresh_token(user.id, refresh_token, db)
+        
     return refresh_token
 
 async def generate_jwt_token(user: User, db: Session = None) -> dict:
     """
         Method to generate a jwt token
     """
+    # Create token for this user
     token = await encode_token(user)
     refresh_token = await get_or_create_refresh_token(user, db)
     return {"access_token": token, "token_type": "Bearer",
@@ -157,8 +155,8 @@ async def is_valid_user(email:str, password:str, db: Session):
         return (False, "Wrong password!!")
     return (True, user_db)
 
-async def get_user_by_token(db: Session = Depends(get_db),
-                            token: str = Depends(oauth2_scheme)) -> UserResponse:
+async def get_user_by_token(token: str = Security(oauth2_scheme),db: Session = Depends(get_db),
+                            ) -> UserResponse:
     """
         Verify if the token is on the headers of the request
     """
@@ -209,11 +207,12 @@ async def get_image_path(image_str:str, image_b64:str, image_file: UploadFile):
             extension = my_format.split('/')[-1]
             image_name = f"{image_name}.{extension}"
             image_data = base64.b64decode(imgstr)
-
-            image_path = os.path.join(MEDIA_DIR, image_name)
-            with open(image_path, "wb") as f:
-                f.write(image_data)
-            image_url_path = f"/media/{os.path.basename(image_path)}"
+            s3.put_object(Bucket = BUCKET_NAME,
+                          Key=image_name,
+                          Body=image_data,
+                          ContentType=my_format.replace('data:', '')
+                          )
+            image_url_path = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_name}"
             return image_url_path
         except Exception as e:
             raise HTTPException(status_code=400,

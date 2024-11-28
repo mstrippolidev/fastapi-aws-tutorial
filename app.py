@@ -10,7 +10,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import (FastAPI, Depends, HTTPException, UploadFile)
 from fastapi.param_functions import File, Form
 from pydantic_models.schemas import (UserCreate, UserResponse, PostResponseUser,
-                                     PostResponse, PostCreateImage, PostResponsePaginated)
+                                     PostResponse, PostCreateImage, PostResponsePaginated,
+                                     Token)
 load_dotenv()  # load environment variables
 from database.services import (get_db, get_user_email, # pylint: disable=wrong-import-position
                                generate_jwt_token, is_valid_user,
@@ -18,15 +19,15 @@ from database.services import (get_db, get_user_email, # pylint: disable=wrong-i
                                get_post, update_post, oauth2_scheme, verify_token,
                                get_refresh_token, get_user, delete_refresh_token)
 from database.models import (User, Posts)  # pylint: disable=wrong-import-position
-from database.database import (baseModel, engine)  # pylint: disable=wrong-import-position
+# from database.database import (baseModel, engine)  # pylint: disable=wrong-import-position
 
 app = FastAPI()
 
 # Create all tables
-baseModel.metadata.create_all(bind=engine)
+# baseModel.metadata.create_all(bind=engine)
 
 PAGE_SIZE = 3
-print('antes del routed')
+# print('antes del routed')
 @app.get('/')
 async def hello():
     """
@@ -34,7 +35,7 @@ async def hello():
     """
     return {"msg": "Hello wordl from actions"}
 
-@app.post('/api/register', status_code = 201)
+@app.post('/api/register', status_code = 201, response_model=Token)
 async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:
     """
         Api to register users.
@@ -53,10 +54,8 @@ async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:
         db.add(user_model)
         db.flush()
         db.refresh(user_model)
-
         # Generate token and response
         token = await generate_jwt_token(user_model, db=db)
-
         # response
         # user_dict = UserResponse.from_orm(user_model).dict()
         response = {**token}
@@ -67,7 +66,7 @@ async def create_user(user:UserCreate, db: Session = Depends(get_db)) -> dict:
     db.commit()
     return response
 
-@app.post('/api/login')
+@app.post('/api/login', response_model=Token)
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
                      db: Session = Depends(get_db)):
     """
@@ -75,13 +74,11 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
     """
     email = form_data.username
     password = form_data.password
-
     is_valid, user_db = await is_valid_user(email, password, db)
-
+    print('is valid user')
     if not is_valid:
         raise HTTPException(401, user_db)
     token = await generate_jwt_token(user_db, db)
-
     return token
 
 @app.post('/api/refresh_token')
@@ -126,6 +123,7 @@ async def get_current_user(user_response : UserResponse = Depends(get_user_by_to
     """
         Get user details
     """
+    print('dentro del endpoint')
     return user_response
 
 
