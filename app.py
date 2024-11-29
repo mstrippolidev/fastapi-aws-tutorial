@@ -100,7 +100,7 @@ async def refresh_token(token:str = Depends(oauth2_scheme), db: Session = Depend
     # Validate that has the same token.
     if refresh_token_db is None or refresh_token_db.refresh_token != token:
         raise credentials_exception
-    
+
     # Refresh the token on the database
     user_db = await get_user(user_id, db)
     new_token = await generate_jwt_token(user_db)
@@ -108,10 +108,10 @@ async def refresh_token(token:str = Depends(oauth2_scheme), db: Session = Depend
     db.commit()
     db.refresh(refresh_token_db)
     return new_token
-    
 
 @app.get('/api/logout')
-async def logout(user_response: UserResponse = Depends(get_user_by_token),db: Session = Depends(get_db)):
+async def logout(user_response: UserResponse = Depends(get_user_by_token),
+                 db: Session = Depends(get_db)):
     """
         Delete the refresh_token from the user
     """

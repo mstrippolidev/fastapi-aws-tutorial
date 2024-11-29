@@ -46,7 +46,10 @@ class Posts(baseModel): # pylint: disable=too-few-public-methods
 
 
 
-class RefreshToken(baseModel):
+class RefreshToken(baseModel): # pylint: disable=too-few-public-methods
+    """
+        Model for refresh token table
+    """
     __tablename__ = 'refresh_token'
     id = Column(Integer, primary_key=True, index=True)
     refresh_token = Column(String, index=True)

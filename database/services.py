@@ -65,11 +65,14 @@ async def get_user_email(email:str, db: Session) -> User:
     return db_user
 
 async def verify_token(token: str, credentials_exception):
+    """
+        Verify if is a valid token and is not expired
+    """
     try:
-        payload = jwt.decode(token, SECRET_JWT, algorithms=["HS256"])    
-    except:
-        raise credentials_exception
-    # Token is not expired  
+        payload = jwt.decode(token, SECRET_JWT, algorithms=["HS256"])
+    except Exception as exe:
+        raise credentials_exception from exe
+    # Token is not expired
     exp = payload.get('exp')
     if exp is None or datetime.utcfromtimestamp(exp) < datetime.utcnow():
         raise credentials_exception
@@ -122,7 +125,6 @@ async def get_or_create_refresh_token(user: User, db: Session):
         await save_refresh_token(user.id, refresh_token, db)
     else:
         refresh_token = refresh_token_db.refresh_token
-        
     return refresh_token
 
 async def generate_jwt_token(user: User, db: Session = None) -> dict:
@@ -163,23 +165,18 @@ async def get_user_by_token(token: str = Security(oauth2_scheme),db: Session = D
     try:
         # Decode the token and get the user_id from it
         payload = jwt.decode(token, SECRET_JWT, algorithms=["HS256"])
-    
     except Exception as e:
         raise HTTPException(422, f"Error {str(e)}") from e
 
     user_db = db.query(User).get(payload['id'])
     if not user_db:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
     # Check if the token has expired
     exp = payload.get("exp")
     if exp is None or datetime.utcfromtimestamp(exp) < datetime.utcnow():
         raise HTTPException(status_code=401, detail="Token has expired")
-    
     user_schema = UserResponse.from_orm(user_db)
     return user_schema
-    
-
 
 async def get_extension_from_base64(base64_str: str):
     """

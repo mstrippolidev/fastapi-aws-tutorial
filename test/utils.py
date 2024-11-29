@@ -15,7 +15,7 @@ from pydantic_models.schemas import UserResponse
 client = TestClient(app)
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_URL_TEST = f"postgresql://postgres:{DB_PASSWORD}@localhost:5433/fast_api_db"
-print(DB_URL_TEST, 'Este es el url!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
 engine = create_engine(DB_URL_TEST)
 
 baseModel.metadata.create_all(bind=engine)
@@ -23,16 +23,16 @@ baseModel.metadata.create_all(bind=engine)
 TestingSession = sessionmaker(autocommit = False, autoflush = False, bind=engine)
 
 def override_get_db():
+    print(DB_URL_TEST, 'Este es el url!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     db = TestingSession()
     try:
         yield db
     finally:
         db.close()
 
-USER_MOCK =  {'id': 1, 'email': 'something@faj.com', 'name': 'miquel', 'last_name': 'any',
+USER_MOCK =  {'email': 'something@faj.com', 'name': 'miquel', 'last_name': 'any',
             'created_at': str(datetime.now())}
 def override_get_current_user():
-
     return UserResponse(**USER_MOCK)
 
 
@@ -47,19 +47,21 @@ def db_session():
 @pytest.fixture
 def initial_state(db_session):
     user = User(**USER_MOCK)
+    db = db_session
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    user_response = UserResponse.from_orm(user).dict()
+    USER_MOCK['id'] = user_response['id']
     post = Posts(
         title = 'example title',
         content = 'some content',
-        user_id = 1,
+        user_id = user_response['id'],
         image = 'Some image',
         created_at = str(datetime.now())
     )
-    db = db_session
-    db.add(user)
     db.add(post)
     db.commit()
-    user_response = UserResponse.from_orm(user).dict()
-    USER_MOCK['id'] = user_response['id']
     yield post
     # Delete everything
     db.query(RefreshToken).delete()
