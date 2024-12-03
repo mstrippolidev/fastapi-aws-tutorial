@@ -123,7 +123,6 @@ async def get_current_user(user_response : UserResponse = Depends(get_user_by_to
     """
         Get user details
     """
-    print('dentro del endpoint')
     return user_response
 
 

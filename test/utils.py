@@ -13,9 +13,13 @@ from database.models import (Posts, User, RefreshToken)
 from pydantic_models.schemas import UserResponse
 
 client = TestClient(app)
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_URL_TEST = f"postgresql://postgres:{DB_PASSWORD}@localhost:5433/fast_api_db"
-
+DB_HOST_TEST = os.getenv('DB_HOST_TEST')
+DB_PASSWORD_TEST = os.getenv("DB_PASSWORD_TEST")
+DB_USER_TEST = os.getenv("DB_USER_TEST")
+DB_NAME_TEST = os.getenv('DB_NAME_TEST')
+DB_PORT_TEST = os.getenv('DB_PORT_TEST')
+DB_URL_TEST = f"postgresql://{DB_USER_TEST}:{DB_PASSWORD_TEST}@{DB_HOST_TEST}:{DB_PORT_TEST}/{DB_NAME_TEST}"
+# print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', DB_URL_TEST)
 engine = create_engine(DB_URL_TEST)
 
 baseModel.metadata.create_all(bind=engine)
@@ -23,7 +27,6 @@ baseModel.metadata.create_all(bind=engine)
 TestingSession = sessionmaker(autocommit = False, autoflush = False, bind=engine)
 
 def override_get_db():
-    print(DB_URL_TEST, 'Este es el url!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     db = TestingSession()
     try:
         yield db
