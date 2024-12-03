@@ -40,4 +40,5 @@ def test_create_user(db_session):
     assert resp.status_code == 422
     data['email'] = 'valid@email.com'
     resp = client.post('/api/register', json=data)
+    print(resp.text)
     assert resp.status_code == 201
