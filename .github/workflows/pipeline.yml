@@ -8,11 +8,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      DB_PASSWORD_TEST=${{secrets.DB_PASSWORD_TEST}}
-      DB_HOST_TEST=${{secrets.DB_HOST_TEST}}
-      DB_NAME_TEST=${{secrets.DB_NAME_TEST}}
-      DB_USER_TEST=${{secrets.DB_USER_TEST}}
-      DB_PORT_TEST=${{secrets.DB_PORT_TEST}}
+      DB_PASSWORD_TEST: ${{secrets.DB_PASSWORD_TEST}}
+      DB_HOST_TEST: ${{secrets.DB_HOST_TEST}}
+      DB_NAME_TEST: ${{secrets.DB_NAME_TEST}}
+      DB_USER_TEST: ${{secrets.DB_USER_TEST}}
+      DB_PORT_TEST: ${{secrets.DB_PORT_TEST}}
     steps:
       - name: Echo message
         run: |
