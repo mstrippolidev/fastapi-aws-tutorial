@@ -72,11 +72,11 @@ jobs:
         with:
           python-version: 3.8
 
-      # Install Docker (if necessary)
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
+      # # Install Docker (if necessary)
+      # - name: Install Docker
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y docker.io
 
       # Build dependencies in Amazon Linux environment
       - name: Build dependencies compatible with AWS Lambda
