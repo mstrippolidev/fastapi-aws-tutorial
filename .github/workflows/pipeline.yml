@@ -13,6 +13,7 @@ jobs:
       DB_NAME_TEST: ${{secrets.DB_NAME_TEST}}
       DB_USER_TEST: ${{secrets.DB_USER_TEST}}
       DB_PORT_TEST: ${{secrets.DB_PORT_TEST}}
+      TEST_ENVIRONMENT: 1
       SECRET_JWT: ${{secrets.SECRET_JWT}}
     steps:
       - name: Echo message

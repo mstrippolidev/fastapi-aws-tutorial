@@ -1,6 +1,7 @@
 """
     This is the main file of the application. In here is placed all the business logic.
 """
+import os
 from typing import  List
 from passlib.hash import bcrypt
 from mangum import Mangum
@@ -33,7 +34,9 @@ async def hello():
     """
         Initial function for testing
     """
-    create_tables()
+    if not os.getenv('TEST_ENVIRONMENT'):
+        print('corriendo test')
+        create_tables()
     return {"msg": "Hello wordl from actions"}
 
 @app.post('/api/register', status_code = 201, response_model=Token)
