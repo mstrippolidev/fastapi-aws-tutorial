@@ -18,3 +18,4 @@ engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 baseModel = declarative_base()
+baseModel.metadata.create_all(bind=engine)
