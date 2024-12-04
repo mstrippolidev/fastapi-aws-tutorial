@@ -19,7 +19,7 @@ from database.services import (get_db, get_user_email, # pylint: disable=wrong-i
                                get_post, update_post, oauth2_scheme, verify_token,
                                get_refresh_token, get_user, delete_refresh_token)
 from database.models import (User, Posts)  # pylint: disable=wrong-import-position
-# from database.database import (baseModel, engine)  # pylint: disable=wrong-import-position
+from database.database import create_tables  # pylint: disable=wrong-import-position
 
 app = FastAPI()
 
@@ -33,6 +33,7 @@ async def hello():
     """
         Initial function for testing
     """
+    create_tables()
     return {"msg": "Hello wordl from actions"}
 
 @app.post('/api/register', status_code = 201, response_model=Token)
