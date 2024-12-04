@@ -81,8 +81,7 @@ jobs:
       # Build dependencies in Amazon Linux environment
       - name: Build dependencies compatible with AWS Lambda
         run: |
-          docker run --rm -v "$PWD":/var/task lambci/lambda:build-python3.8 \ 
-          /bin/sh -c "pip install -r requirements.txt -t /var/task/; exit"
+          docker run --rm -v "$PWD":/var/task lambci/lambda:build-python3.8 /bin/sh -c "pip install -r requirements.txt -t /var/task/; exit"
         
       # - name: Install dependencies
       #   run: |
