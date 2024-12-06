@@ -23,4 +23,18 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
 - [Contribution Guidelines](#contribution-guidelines) 
 - [License](#license)
 ## About the App
-Our FastAPI application is a simple yet powerful platform that allows users to create and manage posts. We'll cover everything from initial setup to integrating advanced AWS services.
+Our FastAPI application is a simple yet powerful platform that allows users to create and manage posts, with the ability to upload images to AWS S3. We'll cover everything from initial setup to integrating advanced AWS services.
+
+
+### Getting Started 
+#### Prerequisites 
+- **Python 3.8+** 
+- **AWS Account** 
+- **Git Installed** 
+- **Virtual Environment Setup**
+
+**Clone the Repository**
+```bash 
+  git clone https://github.com/mstrippolidev/fastapi-aws-tutorial.git
+  cd fastapi-aws-tutorial 
+```
