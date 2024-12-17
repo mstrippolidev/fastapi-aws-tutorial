@@ -53,7 +53,7 @@ Install the required Python packages using the requirements.txt file:
 ### SQLAlchemy Models
 I use SQLAlchemy for interacting with our database. Below is an example of user and Post model:
 ```python
-  from datetime import datetime, timezone
+from datetime import datetime, timezone
 from passlib.hash import bcrypt
 from sqlalchemy.orm import relationship
 from sqlalchemy import (Column, Integer, String, ForeignKey)
