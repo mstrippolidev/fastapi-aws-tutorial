@@ -7,7 +7,6 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
 ## Table of Contents
 - [About the App](#about-the-app)
     - [Getting Started](#getting-started)
-    - [User Posts](#user-posts)
     - [SQLAlchemy Models](#sqlalchemy-models) 
     - [Pydantic Models](#pydantic-models) 
     - [JWT Authentication](#jwt-authentication) 
@@ -38,3 +37,60 @@ Our FastAPI application is a simple yet powerful platform that allows users to c
   git clone https://github.com/mstrippolidev/fastapi-aws-tutorial.git
   cd fastapi-aws-tutorial 
 ```
+**Set Up the Virtual Environment**
+Create and activate a virtual environment to manage your Python packages:
+```bash 
+python3 -m venv venv
+source venv/bin/activate  # On Windows use 'venv\Scripts\activate'
+```
+
+**Install dependecies**
+Install the required Python packages using the requirements.txt file:
+```bash 
+  pip install -r requirements.txt
+```
+
+### SQLAlchemy Models
+I use SQLAlchemy for interacting with our database. Below is an example of user and Post model:
+```python
+  from datetime import datetime, timezone
+from passlib.hash import bcrypt
+from sqlalchemy.orm import relationship
+from sqlalchemy import (Column, Integer, String, ForeignKey)
+from database.database import baseModel # pylint: disable=import-error, no-name-in-module
+
+
+class User(baseModel): # pylint: disable=too-few-public-methods
+    """
+        Class for user table
+    """
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    name = Column(String)
+    last_name = Column(String, nullable=True)
+    password_hash = Column(String)
+    created_at = Column(String, default=datetime.utcnow())
+    posts = relationship('Posts', back_populates='user')
+
+    def check_password(self, password:str) -> bool:
+        """
+            Method to check if password match the hash.
+        """
+        return bcrypt.verify(password, self.password_hash)
+
+class Posts(baseModel): # pylint: disable=too-few-public-methods
+    """
+        Model for post table.
+    """
+    __tablename__ = 'posts'
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    content = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    image = Column(String, nullable=True)
+    created_at = Column(String, default=datetime.utcnow())
+    # relationship
+    user = relationship("User", back_populates='posts')
+```
+Here User have a relationship one to many with Post model. I add the relationship function to backpolulate post model with their respective user to improve performance.
