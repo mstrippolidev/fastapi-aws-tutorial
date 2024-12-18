@@ -10,7 +10,9 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
     - [Set Up the Virtual Environment](#set-up-the-virtual-environment)
     - [SQLAlchemy Models](#sqlalchemy-models) 
     - [Overview of Endpoints](#overview-of-endpoints)
-    - [JWT Authentication](#jwt-authentication) 
+    - [JWT Authentication](#jwt-authentication)
+- [Setting Up AWS S3](#setting-up-aws-s3) 
+    - [Configuring bucket](#configuring-bucket) 
 - [Setting Up AWS RDS](#setting-up-aws-rds) 
     - [Configuring RDS for Production](#configuring-rds-for-production) 
 - [Deploying with AWS Lambda](#deploying-with-aws-lambda) 
@@ -22,7 +24,7 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
 - [Contribution Guidelines](#contribution-guidelines) 
 - [License](#license)
 ## About the App
-Our FastAPI application is a simple yet powerful platform that allows users to create and manage posts, with the ability to upload images to AWS S3. We'll cover everything from initial setup to integrating advanced AWS services.
+FastAPI application is a simple yet powerful platform that allows users to create and manage posts, with the ability to upload images to AWS S3. I'll cover everything from initial setup to integrating advanced AWS services.
 
 
 ### Getting Started 
@@ -80,7 +82,7 @@ For the testing environment:
 DB_NAME_TEST, DB_USER_TEST, DB_PASSWORD_TEST, DB_HOST_TEST, DB_PORT_TEST: Test database configurations. You can set these to any accessible database, but ensure it's reachable by the pipeline to run tests effectively.
 
 ### SQLAlchemy Models
-I use SQLAlchemy for interacting with our database. Below is an example of user and Post model:
+I use SQLAlchemy for interacting with our database. Below is an example of User and Post model:
 ```python
 from datetime import datetime, timezone
 from passlib.hash import bcrypt
@@ -195,3 +197,4 @@ class RefreshToken(Base):
     created_at = Column(String, default=datetime.now(timezone.utc))
 
 ```
+## Setting Up AWS S3
