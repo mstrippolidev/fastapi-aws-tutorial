@@ -198,3 +198,71 @@ class RefreshToken(Base):
 
 ```
 ## Setting Up AWS S3
+For upload and store image I use S3 from AWS, here are the steps I do to setting up the bucket in AWS, and in the application layer to handle the images.
+
+
+#### Creating the S3 Bucket
+Log in to your AWS account and go to S3 in the search panel, one you are in the panel for S3:
+- Click on Create bucket.
+- After tab you will see a tab to configure the bucket, enter a unique Bucket name, you can only use lowercase english letter, numbers, hyphens and dots.
+- Choose the AWS Region closest to your application servers.
+- Now, you can keep enabled the option 'Block all public access' (Recommended) or disabled, but if you disabled keep in mind that whatever person can access the bucket, so you cannot save sensitive data there and you are expose to malicious attack.
+- Click in create bucket.
+
+#### Configuring Bucket Permissions
+Now you can begin upload files to the bucket but you cannot see the files if you try to access through the browser. For that we need to add permissions to the bucket.
+There are several ways to do it, so, I'll explain from the less recommended to the more recommended.
+
+Option 1: Public Bucket: Making the bucket public allows anyone to access the images via a URL. This is not recommended due to security risks.
+Steps:
+- Go to the Permissions tab of your bucket.
+- Click Edit under Block public access settings.
+- Unchecked Block all public access, if you have checked it, and confirm
+- Below in bucket policy add this
+```Json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::your-bucket-name/*"
+    }
+  ]
+}
+```
+Change the parameter your-bucket-name for your actual bucket name, and click save changes.
+Now you can access your image through the browser.
+
+Option 2: Private Bucket with Pre-signed URLs
+This is a better approach an actually what I use that is generate pre-signed URLs for accessing images. This method enhances security by granting temporary access to specific objects without exposing the entire bucket.
+- Ensure that Block all public access is enabled in your bucket settings. You can see if it's enabled in the permissions tab.
+- Use AWS SDKs (like boto3 in Python) to generate pre-signed URLs when users request access to an image.
+```python 
+def generate_signed_url(object_key:str,exp:int = 3600):
+    """
+        Generate a signed url for the bucket
+    """
+    url = s3.generate_presigned_url(
+        ClientMethod='get_object',
+        Params={'Bucket': BUCKET_NAME, 'Key': object_key},
+        ExpiresIn=exp)
+    return url
+
+def add_presigned_url_to_post(post:PostResponse):
+    """
+        Change the image field for the presigned url
+    """
+    if post.image is not None and post.image.startswith(f'https://{BUCKET_NAME}.s3.amazonaws.com'):
+        object_key = post.image.split('/')
+        object_key = object_key[-1]
+        signed_url = generate_signed_url(object_key)
+        post.image = signed_url
+
+```
+This function generate a presigned url for the bucket and set an expiretion time to one hour.
+
+Option 3: Using CloudFront for Secure Distribution
+The best method is to use CloudFront (Amazon Content Delivery Network) not only improve the performance of the app but also help you to hide the bucket_name, improving the security.
