@@ -289,7 +289,7 @@ if image_file:
         # Upload the image file to S3
         s3.upload_fileobj(image_file.file, BUCKET_NAME, image_file.filename,
                     ExtraArgs={'ContentType': content_type})
-        cloud_front_root = 'https://d7bk2gjv85cqu.cloudfront.net'
+        cloud_front_root = 'https://your-cloudfront-domain-name.cloudfront.net'
         image_url_path = f"{cloud_front_root}/{image_file.filename}"
         return image_url_path
     except Exception as e:
