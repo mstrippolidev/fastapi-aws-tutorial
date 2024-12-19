@@ -20,8 +20,6 @@ class User(baseModel): # pylint: disable=too-few-public-methods
     last_name = Column(String, nullable=True)
     password_hash = Column(String)
     created_at = Column(String, default=datetime.utcnow())
-    # Relationships BACK_POPULATE USE THE NAME OF THE ATTRIBUTE
-    # THAT MAKE REFERENCE BACKWARDS RELATIONSHIP
     posts = relationship('Posts', back_populates='user')
 
     def check_password(self, password:str) -> bool:
@@ -43,8 +41,6 @@ class Posts(baseModel): # pylint: disable=too-few-public-methods
     created_at = Column(String, default=datetime.utcnow())
     # relationship
     user = relationship("User", back_populates='posts')
-
-
 
 class RefreshToken(baseModel): # pylint: disable=too-few-public-methods
     """

@@ -7,6 +7,7 @@ import random
 import string
 import re
 from datetime import (datetime, timedelta, timezone)
+import mimetypes
 import boto3
 import jwt
 from fastapi import  (Depends, HTTPException, UploadFile, Security)
@@ -216,18 +217,37 @@ async def get_image_path(image_str:str, image_b64:str, image_file: UploadFile):
                                 detail=f"Invalid base64 image data {str(e)}" ) from e
     if image_file:
         try:
-            # image_path = os.path.join(MEDIA_DIR, image_file.filename)
-            # with open(image_path, "wb") as f:
-            #     f.write(await image_file.read())
-
-            # image_url_path = f"/media/{os.path.basename(image_path)}"
+            content_type, _ = mimetypes.guess_type(image_file.filename)
+            if content_type is None:
+                content_type = 'application/octet-stream'
             # Upload the image file to S3
-            s3.upload_fileobj(image_file.file, BUCKET_NAME, image_file.filename)
+            s3.upload_fileobj(image_file.file, BUCKET_NAME, image_file.filename,
+                        ExtraArgs={'ContentType': content_type})
             image_url_path = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_file.filename}"
             return image_url_path
         except Exception as e:
             raise HTTPException(400, f"Invalid image file {str(e)}") from e
     return None
+
+def generate_signed_url(object_key:str,exp:int = 3600):
+    """
+        Generate a signed url for the bucket
+    """
+    url = s3.generate_presigned_url(
+        ClientMethod='get_object',
+        Params={'Bucket': BUCKET_NAME, 'Key': object_key},
+        ExpiresIn=exp)
+    return url
+
+def add_presigned_url_to_post(post:PostResponse):
+    """
+        Change the image field for the presigned url
+    """
+    if post.image is not None and post.image.startswith(f'https://{BUCKET_NAME}.s3.amazonaws.com'):
+        object_key = post.image.split('/')
+        object_key = object_key[-1]
+        signed_url = generate_signed_url(object_key)
+        post.image = signed_url
 
 async def save_post(post: Posts, db: Session):
     """

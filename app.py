@@ -18,7 +18,8 @@ from database.services import (get_db, get_user_email, # pylint: disable=wrong-i
                                generate_jwt_token, is_valid_user,
                                get_user_by_token, get_image_path, save_post,
                                get_post, update_post, oauth2_scheme, verify_token,
-                               get_refresh_token, get_user, delete_refresh_token)
+                               get_refresh_token, get_user, delete_refresh_token,
+                               add_presigned_url_to_post)
 from database.models import (User, Posts)  # pylint: disable=wrong-import-position
 from database.database import create_tables  # pylint: disable=wrong-import-position
 
@@ -79,7 +80,6 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
     email = form_data.username
     password = form_data.password
     is_valid, user_db = await is_valid_user(email, password, db)
-    print('is valid user')
     if not is_valid:
         raise HTTPException(401, user_db)
     token = await generate_jwt_token(user_db, db)
@@ -144,12 +144,13 @@ async def create_post(post_request: PostCreateImage,
         post_obj = Posts(**post_request.dict(exclude=["image_str", "image_b64"]),
                          user_id = user_response.id, image = image)
         post_obj = await save_post(post_obj, db)
-        response = PostResponse.from_orm(post_obj).dict()
+        response = PostResponse.from_orm(post_obj)
     except Exception as e:
         db.rollback()
         raise HTTPException(422, f"Error {str(e)}") from e
     db.commit()
-    return response
+    add_presigned_url_to_post(response)
+    return response.dict()
 
 @app.post("/api/posts/image-file")
 async def create_post_image_file(title: str = Form(...), content: str = Form(...),
@@ -164,13 +165,13 @@ async def create_post_image_file(title: str = Form(...), content: str = Form(...
         post_obj = Posts(title = title, content = content,
                           user_id = user_response.id, image = image)
         post_obj = await save_post(post_obj, db)
-        response = PostResponse.from_orm(post_obj).dict()
+        response = PostResponse.from_orm(post_obj)
     except Exception as e:
-        print('error', str(e))
         db.rollback()
         raise HTTPException(422, f"Error {str(e)}") from e
     db.commit()
-    return response
+    add_presigned_url_to_post(response)
+    return response.dict()
 
 @app.get("/api/posts", response_model=List[PostResponse])
 async def get_posts_user(user_response : UserResponse = Depends(get_current_user),
@@ -180,7 +181,12 @@ async def get_posts_user(user_response : UserResponse = Depends(get_current_user
     """
     user_id = user_response.id
     posts_db = await get_post(db, user_id)
-    return posts_db
+    response = []
+    for post_obj in posts_db:
+        post_model = PostResponse.from_orm(post_obj)
+        add_presigned_url_to_post(post_model)
+        response.append(post_model)
+    return response
 
 @app.get("/api/posts/{post_id}", response_model=PostResponseUser)
 async def get_post_detail(post_id: int, db: Session = Depends(get_db)):
@@ -190,6 +196,9 @@ async def get_post_detail(post_id: int, db: Session = Depends(get_db)):
     post = await get_post(db, None, post_id = post_id)
     if not post:
         raise HTTPException(404, "post not found")
+    post_model = PostResponse.from_orm(post)
+    add_presigned_url_to_post(post_model)
+    post.image = post_model.image
     return post
 
 @app.put("/api/posts/{post_id}", response_model=PostResponse)
@@ -206,7 +215,9 @@ async def edit_post(post_request: PostCreateImage,post_id: int,
 
     # Update the post
     post = await update_post(db, post_id, post_request.dict(), user_response, image)
-    return post
+    post_model = PostResponse.from_orm(post)
+    add_presigned_url_to_post(post_model)
+    return post_model
 
 @app.put("/api/posts/{post_id}/image-file", response_model=PostResponse)
 async def edit_post_image_file(post_id: int, title: str = Form(...), # pylint: disable=too-many-arguments
@@ -223,7 +234,9 @@ async def edit_post_image_file(post_id: int, title: str = Form(...), # pylint: d
     post = await update_post(db, post_id,
                              {'title': title, 'content': content},
                              user_response, image)
-    return post
+    post_model = PostResponse.from_orm(post)
+    add_presigned_url_to_post(post_model)
+    return post_model
 
 @app.delete("/api/posts/{post_id}")
 async def delete_post(post_id: int, db: Session = Depends(get_db),
@@ -261,8 +274,13 @@ async def get_posts_all(page: int = 1, search: str = None,
         if page > 1 and page > total_pages:
             raise HTTPException(422, "Number of page exceded")
         posts = query.offset(skip).limit(PAGE_SIZE).all()
+        data = []
+        for post_obj in posts:
+            post_model = PostResponse.from_orm(post_obj)
+            add_presigned_url_to_post(post_model)
+            data.append(post_model)
         return {"total": total_posts, "total_pages": total_pages,
-                "data": posts, "page": page}
+                "data": data, "page": page}
     except Exception as e:
         print("Error", str(e))
         raise HTTPException(422, f"Error: {str(e)}") from e
