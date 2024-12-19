@@ -12,7 +12,8 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
     - [Overview of Endpoints](#overview-of-endpoints)
     - [JWT Authentication](#jwt-authentication)
 - [Setting Up AWS S3](#setting-up-aws-s3) 
-    - [Configuring bucket](#configuring-bucket) 
+    - [Creating S3 Bucket](#creating-s3-bucket)
+    - [Configuring Bucket Permissions](#configuring-bucket-permissions)
 - [Setting Up AWS RDS](#setting-up-aws-rds) 
     - [Configuring RDS for Production](#configuring-rds-for-production) 
 - [Deploying with AWS Lambda](#deploying-with-aws-lambda) 
@@ -201,7 +202,7 @@ class RefreshToken(Base):
 For upload and store image I use S3 from AWS, here are the steps I do to setting up the bucket in AWS, and in the application layer to handle the images.
 
 
-#### Creating the S3 Bucket
+#### Creating S3 Bucket
 Log in to your AWS account and go to S3 in the search panel, one you are in the panel for S3:
 - Click on Create bucket.
 - After tab you will see a tab to configure the bucket, enter a unique Bucket name, you can only use lowercase english letter, numbers, hyphens and dots.
@@ -266,3 +267,33 @@ This function generate a presigned url for the bucket and set an expiretion time
 
 Option 3: Using CloudFront for Secure Distribution
 The best method is to use CloudFront (Amazon Content Delivery Network) not only improve the performance of the app but also help you to hide the bucket_name, improving the security.
+- Search for Cloudfront in the search bar
+- Click in create distribution
+-  Origin Domain Name: Your S3 bucket.
+-  In the option 'Origin Access' Check the option: 'Origin access control settings'.
+-  Create a new OAC (Origin Access Control) if you don't have one yet. With that option cloudfront will generate a new policy to access the bucket that we'll have to manually add in the bucket permissions tab.
+-  Scroll down until the option Viewer protocol policy, an select Redirect HTTP to HTTPS.
+-  Because we only want to server images we can select the option 'Do not enable security protections'.
+-  Click create distribution.
+This is the mininum setup to use cloudfront to serve the images for our S3 bucket.
+The final step is to add the policy to the bucket that we want to map. For that you should see a notification for AWS where you can copy the policy.
+Click in copy policy and enter the permissions tab of your bucket, click on edit, paste and click on save this policy will allow cloudfront to access the bucket.
+Wait few minutes until the distribution is setup, once is ready copy the distribution domain name and use it as a root path instead of the bucket.
+You can update the code like this to work with cloudfront.
+```python 
+if image_file:
+    try:
+        content_type, _ = mimetypes.guess_type(image_file.filename)
+        if content_type is None:
+            content_type = 'application/octet-stream'
+        # Upload the image file to S3
+        s3.upload_fileobj(image_file.file, BUCKET_NAME, image_file.filename,
+                    ExtraArgs={'ContentType': content_type})
+        cloud_front_root = 'https://d7bk2gjv85cqu.cloudfront.net'
+        image_url_path = f"{cloud_front_root}/{image_file.filename}"
+        return image_url_path
+    except Exception as e:
+        raise HTTPException(400, f"Invalid image file {str(e)}") from e
+
+```
+With that you can access your images through cloudfront hiding your bucket name.
