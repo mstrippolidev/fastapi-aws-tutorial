@@ -19,6 +19,7 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
     - [Creating Subnets](#creating-subnets)
     - [Creating an Internet Gateway](#creating-an-internet-gateway)
     - [Configuring Route Tables](#configuring-route-tables)
+    - [Setting Up Security Groups](#setting-up-security-groups)
 - [Setting Up AWS RDS](#setting-up-aws-rds) 
     - [Configuring RDS for Production](#configuring-rds-for-production) 
 - [Deploying with AWS Lambda](#deploying-with-aws-lambda) 
@@ -353,6 +354,46 @@ Finally we need to set up the route table for the VPC know how to handle the con
 7) Click on 'Edit subnet associations' for the 'Explicit subnet associations' tab.
 8) Select the private one and click save.
 9) Go back to the route tables menu, and below the recently created route table you will see the main route table (should have a '-' as a name), select this main table an go to the 'routes' tab.
-10) Click on edit router and add the route '0.0.0.0/0' (everything) and target the internet gateway create previosly (vpc-internet-gateway).
+10) Click on edit router and add the route '0.0.0.0/0' (everything) and target the internet gateway created previosly (vpc-internet-gateway).
 11) Click save changes.
 With this set up the 'MAIN' route table will have the route for internet and the public subnets.
+
+#### Setting Up Security Groups
+Let's create SG before hand for our RDS and lambda to interect between each other. Look in the left bar the option 'Security groups' in the VPC menu.
+
+Lambda SG:
+1) Click on create Security group.
+2) Give it a name and description you want, I will start with a SG for lambda so I'll call it 'lambdaSG'.
+3) VPC select the one that created previosly (vpc-fastapi-lambda-rds).
+4) Only add the outbound rule to allow any traffic for everywhere 0.0.0.0/0
+5) Click on create Security group
+
+RDS SG:
+1) Let's create another SG for RDS connection with the same VPC.
+2) Add inbound rule, type: Postgresql, Source: custom and look for the lambdaSG.
+3) Outbound rule, everywhere.
+4) Click on create Security group.
+
+
+## Setting Up AWS RDS
+
+Go to the search bar and write RDS, one there we first need to create a new Subnet group, look up in the left bar the option for Subnet group and click on 'create DB subnet group'.
+Give it a name, description and choose the VPC previously created and select only the private subnets.
+
+#### Configuring RDS for Production
+
+ once there click on DB instance and click on 'create database'.
+I will details the steps that I made to settup a postgresql DB.
+1) Select postgresql.
+2) Template left it as production.
+3) In 'Availability and durability' select 'Single DB instance'.
+4) In the settings give it your own identifier name.
+5) In credentials I decided to choose 'Self managed'
+6) Enter a strong password.
+7) Select the Storage type you want to use (I left the current one).
+8) In connectivity Select the VPC that we previously create (vpc-fastapi-lambda-rds).
+9) In DB subnet group select the db subnet group created previously.
+10) Public access select 'No'.
+11) For the security Group choose the one that was created previously for RDS.
+12) Scroll down to additional configuration where you can set up a DB name.
+13) Click on create database.
