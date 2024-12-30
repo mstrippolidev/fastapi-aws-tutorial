@@ -14,6 +14,11 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
 - [Setting Up AWS S3](#setting-up-aws-s3) 
     - [Creating S3 Bucket](#creating-s3-bucket)
     - [Configuring Bucket Permissions](#configuring-bucket-permissions)
+- [Setting Up AWS VPC](#setting-up-aws-vpc) 
+    - [Creating a VPC](#creating-a-vpc)
+    - [Creating Subnets](#creating-subnets)
+    - [Creating an Internet Gateway](#creating-an-internet-gateway)
+    - [Configuring Route Tables](#configuring-route-tables)
 - [Setting Up AWS RDS](#setting-up-aws-rds) 
     - [Configuring RDS for Production](#configuring-rds-for-production) 
 - [Deploying with AWS Lambda](#deploying-with-aws-lambda) 
@@ -297,3 +302,57 @@ if image_file:
 
 ```
 With that you can access your images through cloudfront hiding your bucket name.
+
+## Setting Up AWS VPC
+
+#### Creating a VPC
+1) Go to the search bar an type VPC.
+2) Click on 'create vpc'.
+3) Select VPC Only
+4) Write the name that your want for your VPC in my case I write 'vpc-fastapi-lambda-rds'
+5) For the part 'IPv4 CIDR block', select the network IP address block you want, in my case I use '10.0.0.0/16' because I want that every subnet have 255 host addresses (/24).
+6) Scroll down and click on create vpc.
+
+#### Creating Subnets
+Is best practice to create a subnet for each AZ (Availability zone), in my case I'll need a public subnet (to connect to the internet) an a private subnet to place my RDS services.
+1) In the same VPC menu, look for subnets in the left bar.
+2) Click on create subnet.
+3) Select the VPC recently created for you (in my case was vpc-fastapi-lambda-rds).
+4) Subnet name I'll use 'public-subnet-1'
+5) Choose one of the different AZ. (in my case because I'm in us-east-1, I choose the AZ us-east-1a).
+6) For the IPv4 subnet CIDR block, because is the first one I will take the first octobit of the host IP for the subnets, meaning that the IP will be '10.0.1.0/24'.
+7) Click on add subnet and repeat steps 4-6, until you have 2 public subnet in different AZ, and 2 private subnets in the same AZ.
+In resume this is what I create.
+NAME                        AZ                IPv4 subnet CIDR block
+public-subnet-1         us-east-1a                10.0.1.0/24
+public-subnet-2         us-east-1b                10.0.2.0/24
+private-subnet-1        us-east-1a                10.0.3.0/24
+private-subnet-2        us-east-1b                10.0.4.0/24
+8) Click on create subnets.
+9) One finish AWS setting up the subnets, select the public ones and click on actions and select edit subnet setting.
+10) Check on the option 'Enable auto-assign public IPv4 address'
+11) Click save, do the same for each public subnet.
+
+#### Creating an Internet Gateway
+The archtecture for the VPC and subnets is almost done, now we need a way to interate with the world, for that we have to set up an internet gateway to allow anyone connect to the public subnet of our VPC.
+1) In the same VPC menu, look for 'Internet gateway' in the left bar.
+2) Click on create internet gateway.
+3) Give it a name, I use 'vpc-internet-gateway'.
+4) Click on create.
+5) One is finished click on Action, option Atttach to VPC.
+6) Select the VPC we previously created. ('vpc-fastapi-lambda-rds').
+
+#### Configuring Route Tables
+Finally we need to set up the route table for the VPC know how to handle the connections that will receive fromt the internet.
+1) In the same VPC menu, look for 'route tables' in the left bar.
+2) Click on create route table.
+3) Give it a name that you want, I use 'vpc-fastapi-lambda-rds-route-table'
+4) Select the recentrly created VPC (vpc-fastapi-lambda-rds-route-table).
+5) Click on create route table.
+6) Now one that route table is create click 'subnet associations'
+7) Click on 'Edit subnet associations' for the 'Explicit subnet associations' tab.
+8) Select the private one and click save.
+9) Go back to the route tables menu, and below the recently created route table you will see the main route table (should have a '-' as a name), select this main table an go to the 'routes' tab.
+10) Click on edit router and add the route '0.0.0.0/0' (everything) and target the internet gateway create previosly (vpc-internet-gateway).
+11) Click save changes.
+With this set up the 'MAIN' route table will have the route for internet and the public subnets.
