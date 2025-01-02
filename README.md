@@ -24,7 +24,8 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
     - [Configuring RDS for Production](#configuring-rds-for-production) 
 - [Deploying with AWS Lambda](#deploying-with-aws-lambda) 
     - [Setting Up Lambda layers](#setting-up-lambda-layers)
-    - [Roles for lambda](#roles-for-lambda) 
+    - [Roles for lambda](#roles-for-lambda)
+    - [Setting up Lambda Functions](#setting-up-lambda-functions)
 - [Automating Deployment with GitHub Actions](#automating-deployment-with-github-actions) 
     - [Setting Up the Deployment Pipeline](#setting-up-the-deployment-pipeline) 
 - [What's Next](#whats-next) 
@@ -441,3 +442,5 @@ Go to IAM menu, and create new roles, attach the following policies.
 - CloudWatchActionsEC2Access
 - CloudWatchApplicationSignalsFullAccess
 - CloudWatchEventsFullAccess
+
+#### Setting up Lambda Functions
