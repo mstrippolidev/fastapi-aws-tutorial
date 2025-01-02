@@ -23,7 +23,8 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
 - [Setting Up AWS RDS](#setting-up-aws-rds) 
     - [Configuring RDS for Production](#configuring-rds-for-production) 
 - [Deploying with AWS Lambda](#deploying-with-aws-lambda) 
-    - [Setting Up Lambda in AWS](#setting-up-lambda-in-aws) 
+    - [Setting Up Lambda layers](#setting-up-lambda-layers)
+    - [Roles for lambda](#roles-for-lambda) 
 - [Automating Deployment with GitHub Actions](#automating-deployment-with-github-actions) 
     - [Setting Up the Deployment Pipeline](#setting-up-the-deployment-pipeline) 
 - [What's Next](#whats-next) 
@@ -397,3 +398,46 @@ I will details the steps that I made to settup a postgresql DB.
 11) For the security Group choose the one that was created previously for RDS.
 12) Scroll down to additional configuration where you can set up a DB name.
 13) Click on create database.
+
+## Deploying with AWS Lambda
+
+#### Setting Up Lambda layers
+Let's install our python dependencies in a layer, because I'm on windows I'll do a work around using docker to install the packages compatible with AWS.
+**Create zip file for docker**
+1) Make a directory called lambda_layer, and a sub-directory lambda_layer\python (On windows)
+2) With docker desktop running, run the following command:
+```bash 
+docker run --rm -v "%cd%":/var/task -w /var/task lambci/lambda:build-python3.10 \
+pip install -r requirements.txt -t lambda_layer/python
+``` 
+docker run: Runs a Docker container.
+--rm: Automatically removes the container when it exits.
+-v "%cd%":/var/task: Mounts the current directory (%cd%) to /var/task inside the container. %cd% represents the current directory in Windows.
+-w /var/task: Sets the working directory inside the container to /var/task.
+lambci/lambda:build-python3.10: Uses a Docker image that replicates the AWS Lambda Python 3.10 runtime environment.
+pip install -r requirements.txt -t lambda_layer/python: Installs your dependencies into the lambda_layer/python directory.
+If you are using another python version changed the 3.10 part for your current version.
+Go to the folder lambda_layer\python and your should see all the packages.
+3) Comprime all the files in a zip.
+
+**Create lambda Layer**
+1) Look for Lambda in the search bar on AWS.
+2) In th left pannel click on layers.
+3) Click on create layer
+4) Give it a name and a description to your layer.
+5) Inn the compatible runtime option choose python 3.10.
+6) Uplodad the .zip file with the packages.
+7) click on create.
+
+#### Roles for lambda
+Before creating the function you'll need a few roles to access S3, RDS, cloudWatch and VPC.
+Go to IAM menu, and create new roles, attach the following policies.
+- AmazonCloudWatchEvidentlyFullAccess
+- AmazonCloudWatchRUMFullAccess
+- AmazonRDSFullAccess
+- AmazonS3FullAccess
+- AWSLambdaBasicExecutionRole
+- AWSLambdaVPCAccessExecutionRole
+- CloudWatchActionsEC2Access
+- CloudWatchApplicationSignalsFullAccess
+- CloudWatchEventsFullAccess
