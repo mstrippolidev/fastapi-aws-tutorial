@@ -444,3 +444,40 @@ Go to IAM menu, and create new roles, attach the following policies.
 - CloudWatchEventsFullAccess
 
 #### Setting up Lambda Functions
+1) In the menu for lambda, click on functions on the left bar menu.
+2) Select the option 'Author from Scratch'.
+3) Give it a name that you want.
+4) Runtime I use python 3.10
+5) Permissions select 'use a existing role' and select the role we created the last step.
+6) In additional configuration the option, turn on 'Enable VPC' and select the VPC we create before, select the public subnets, and select the Security group for lambda.
+7) Click on create function.
+8) One the function is created go to code tap and click the option 'Upload from' and select '.zip file'.
+9) Upload the code of your app as a zip file (if you set up the layer you don't need to add the packages).
+10) Now we need to change the handler function. Scroll down to runtime setting and click on edit.
+11) Change the handler function to the one function that invoke the handler, in this case is 'app.handler' and click save.
+12) To add the layer, scroll down to the layer tab and click on 'Add a layer'.
+13) Select 'Custom layer' and choose the layer with the dependencies.
+14) Click Add.
+
+**Add Environment variables**
+In your lambda function go to configuration tab and click on environment variables, and add the following variables.
+- SECRET_JWT
+- BUCKET_NAME
+- AWS_ACCESS_KEY_FASTAPI
+- AWS_SECRET_ACCESS_KEY_FASTAPI
+- DB_NAME
+- DB_USER
+- DB_PASSWORD
+- DB_HOST
+
+**Api gateway**
+To test the lambda function we can create a api gateway.
+1) Go to API Gateway services.
+2) Click on create endpoint.
+3) Select http API.
+4) Integration select lambda and the lambda function we create.
+5) Click next.
+6) In router, method any, and you can choose the resource path you want.
+7) Click next and create.
+8) Test your endpoint, append the resourse path at the end.
+9) Look for CloudWatch logs for any error.
