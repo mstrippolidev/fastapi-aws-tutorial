@@ -408,18 +408,22 @@ Let's install our python dependencies in a layer, because I'm on windows I'll do
 1) Make a directory called lambda_layer, and a sub-directory lambda_layer\python (On windows)
 2) With docker desktop running, run the following command:
 ```bash 
-docker run --rm -v "%cd%":/var/task -w /var/task lambci/lambda:build-python3.10 \
-pip install -r requirements.txt -t lambda_layer/python
+docker run --rm -v ${PWD}:/var/task -w /var/task public.ecr.aws/sam/build-python3.10 `
+bash -c "pip install -r requirements.txt -t lambda_layer/python"
 ``` 
 docker run: Runs a Docker container.
 --rm: Automatically removes the container when it exits.
 -v "%cd%":/var/task: Mounts the current directory (%cd%) to /var/task inside the container. %cd% represents the current directory in Windows.
 -w /var/task: Sets the working directory inside the container to /var/task.
-lambci/lambda:build-python3.10: Uses a Docker image that replicates the AWS Lambda Python 3.10 runtime environment.
+public.ecr.aws/sam/build-python3.10: Uses a Docker image that replicates the AWS Lambda Python 3.10 runtime environment for aws architecture x86_64.
 pip install -r requirements.txt -t lambda_layer/python: Installs your dependencies into the lambda_layer/python directory.
 If you are using another python version changed the 3.10 part for your current version.
 Go to the folder lambda_layer\python and your should see all the packages.
-3) Comprime all the files in a zip.
+3) Comprime all the files in a zip, make sure that when you unzip the file there is a root folder called python, and below that are the packages
+--python
+    -- module1
+    -- module2
+    -- rest of packages
 
 **Create lambda Layer**
 1) Look for Lambda in the search bar on AWS.
@@ -477,7 +481,7 @@ To test the lambda function we can create a api gateway.
 3) Select http API.
 4) Integration select lambda and the lambda function we create.
 5) Click next.
-6) In router, method any, and you can choose the resource path you want.
+6) In router, method any, and in resource path write /{proxy+} to catch all the endpoint.
 7) Click next and create.
 8) Test your endpoint, append the resourse path at the end.
 9) Look for CloudWatch logs for any error.
