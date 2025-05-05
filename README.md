@@ -208,8 +208,16 @@ class RefreshToken(Base):
 ## Setting Up AWS S3
 For upload and store image I use S3 from AWS, here are the steps I do to setting up the bucket in AWS, and in the application layer to handle the images.
 
+If you don't have  a ACCESS_KEY and a SECRET_ACCESS_KEY, you should create one in the IAM menu.
+
+Go to IAM in the AWS console.
+In the left bar click on USERS.
+Create your users, if you want to assing a IAM role to this users click on give consule AWS permissions, in my case I only want the user to upload files through boto3 so is not necessary.
+Attach a custom policies to this user if you do not have a group already created, for S3 i give the police S3FullAccess policie.
+Create the user and save the ACCESS_KEY and SECRET_ACCESS_KEY for this user
 
 #### Creating S3 Bucket
+
 Log in to your AWS account and go to S3 in the search panel, one you are in the panel for S3:
 - Click on Create bucket.
 - Enter a unique Bucket name, you can only use lowercase english letter, numbers, hyphens and dots.
