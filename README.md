@@ -213,7 +213,7 @@ If you don't have  a ACCESS_KEY and a SECRET_ACCESS_KEY, you should create one i
 Go to IAM in the AWS console.
 In the left bar click on USERS.
 Create your users, if you want to assing a IAM role to this users click on give consule AWS permissions, in my case I only want the user to upload files through boto3 so is not necessary.
-Attach a custom policies to this user if you do not have a group already created, for S3 i give the police S3FullAccess policie.
+Attach a custom policies to this user if you do not have a group already created, for S3 i give the permission S3FullAccess.
 Create the user and save the ACCESS_KEY and SECRET_ACCESS_KEY for this user
 
 #### Creating S3 Bucket
