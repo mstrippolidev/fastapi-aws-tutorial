@@ -339,7 +339,7 @@ public-subnet-2         us-east-1b                10.0.2.0/24
 private-subnet-1        us-east-1a                10.0.3.0/24
 private-subnet-2        us-east-1b                10.0.4.0/24
 8) Click on create subnets.
-9) One finish AWS setting up the subnets, select the public ones and click on actions and select edit subnet setting.
+9) Once is ready, select the public ones and click on actions and select edit subnet setting.
 10) Check on the option 'Enable auto-assign public IPv4 address'
 11) Click save, do the same for each public subnet.
 
