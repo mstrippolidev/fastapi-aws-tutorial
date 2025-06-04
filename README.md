@@ -333,15 +333,27 @@ Is best practice to create a subnet for each AZ (Availability zone), in my case 
 6) For the IPv4 subnet CIDR block, because is the first one I will take the first octobit of the host IP for the subnets, meaning that the IP will be '10.0.1.0/24'.
 7) Click on add subnet and repeat steps 4-6, until you have 2 public subnet in different AZ, and 2 private subnets in the same AZ.
 In resume this is what I create.
-NAME                        AZ                IPv4 subnet CIDR block
+
+
+NAME                        AZ                  IPv4 subnet CIDR block
+
+
 public-subnet-1         us-east-1a                10.0.1.0/24
+
+
 public-subnet-2         us-east-1b                10.0.2.0/24
+
+
 private-subnet-1        us-east-1a                10.0.3.0/24
+
+
 private-subnet-2        us-east-1b                10.0.4.0/24
-8) Click on create subnets.
-9) Once is ready, select the public ones and click on actions and select edit subnet setting.
-10) Check on the option 'Enable auto-assign public IPv4 address'
-11) Click save, do the same for each public subnet.
+
+
+9) Click on create subnets.
+10) Once is ready, select the public ones and click on actions and select edit subnet setting.
+11) Check on the option 'Enable auto-assign public IPv4 address'
+12) Click save, do the same for each public subnet.
 
 #### Creating an Internet Gateway
 The archtecture for the VPC and subnets is almost done, now we need a way to interate with the world, for that we have to set up an internet gateway to allow anyone connect to the public subnet of our VPC.
