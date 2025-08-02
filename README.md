@@ -34,7 +34,6 @@ Welcome to this step-by-step guide on deploying a FastAPI application to AWS usi
 ## About the App
 FastAPI application is a simple yet powerful platform that allows users to create and manage posts, with the ability to upload images to AWS S3. I'll cover everything from initial setup to integrating advanced AWS services.
 
-
 ### Getting Started 
 #### Prerequisites 
 - **Python 3.8+** 
