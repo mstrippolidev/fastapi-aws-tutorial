@@ -507,7 +507,7 @@ To test the lambda function we can create a api gateway.
 
 ## Setting Up VPC Endpoint
 
-Our lambda function will try to upload a image to S3 bucket doing that will have to go to the internet gateway and send the image to S3 bucket and wait the response, this method is very slow and insecure. So, instead of going through the internet we can set a VPC endpoint to communicate our VPC with the bucket we want to upload the file with this services we will leverage all the capabilities of AWS using their fast and secure conection to S3.
+Our lambda function will try to upload a image to S3 bucket doing that will have to go to the public internet and send the image to S3 bucket and wait the response, this method is very slow and insecure. So, instead of going through the internet we can set a VPC endpoint to communicate our VPC with the bucket we want to upload the file with this services leveraging all the capabilities of AWS using their fast and secure private conection to S3.
 1) Search for 'VPC' in the search bar in AWS.
 2) In the left bar menu click on Endpoints.
 3) write a name, type is AWS services.
