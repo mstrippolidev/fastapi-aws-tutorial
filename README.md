@@ -1,5 +1,5 @@
 
-# Tutorial to Deploy FastAPI App in AWS
+# Tutorial to Deploy FastAPI App in AWS as Lambda function
 
 Welcome to this step-by-step guide on deploying a FastAPI application to AWS using Lambda, S3, and RDS. This repository serves as my personal reference to remember how to set up a FastAPI app in AWS. I've aimed to make the instructions as clear as possible so that anyone else can benefit from it as well.
 
