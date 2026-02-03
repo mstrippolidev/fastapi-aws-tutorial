@@ -1,7 +1,9 @@
 
 # Tutorial to Deploy FastAPI App in AWS as Lambda function
 
-Welcome to this step-by-step guide on deploying a FastAPI application to AWS using Lambda, S3, and RDS. This repository serves as my personal reference to remember how to set up a FastAPI app in AWS. I've aimed to make the instructions as clear as possible so that anyone else can benefit from it as well.
+Welcome to this step-by-step guide on deploying a FastAPI application to AWS using Lambda, S3, and RDS in a private VPC. We also learn different methods to see our images through S3 and cloudFront, and finally we make a s3 endpoint to upload our image through the private red of AWS. This repository serves as my personal reference to remember how to set up a FastAPI app in AWS. I've aimed to make the instructions as clear as possible so that anyone else can benefit from it as well.
+
+<img width="1200" height="700" alt="Code_Generated_Image (2)" src="https://github.com/user-attachments/assets/15536dbe-9374-436f-8937-759fd0a9b1f7" />
 
 
 ## Table of Contents
